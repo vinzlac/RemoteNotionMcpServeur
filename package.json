@@ -12,7 +12,9 @@
     "test": "tsx src/test-client.ts",
     "test:stdio": "tsx src/test-client-stdio.ts",
     "test:http": "tsx src/test-client-http.ts",
-    "test:api": "tsx src/test-api-direct.ts"
+    "test:api": "tsx src/test-api-direct.ts",
+    "llm": "tsx src/llm-mcp-client.ts",
+    "demo": "tsx src/llm-mcp-demo.ts"
   },
   "keywords": [
     "mcp",

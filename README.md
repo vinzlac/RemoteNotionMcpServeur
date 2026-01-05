@@ -140,6 +140,88 @@ Dans votre application ChatMCP sur iPhone :
    - Ne commitez jamais le fichier `.env`
    - Utilisez des variables d'environnement sécurisées sur votre plateforme de déploiement
 
+## 🤖 Client LLM avec intégration MCP Notion
+
+### Fonctionnalité
+
+Un client qui combine un LLM (Mistral ou Gemini) avec le serveur MCP Notion pour permettre des **requêtes en langage naturel** sur vos pages Notion.
+
+**Exemple d'utilisation :**
+- "Quelles sont mes pages Notion ?"
+- "Trouve-moi les pages qui contiennent le mot 'test'"
+- "Quelle est la date de création de ma page Journal ?"
+
+### Configuration
+
+Ajoutez dans votre fichier `.env` :
+
+```bash
+# Provider LLM
+LLM_PROVIDER=mistral  # ou 'gemini'
+
+# Clé API (selon votre choix)
+MISTRAL_API_KEY=your_key_here        # Si provider=mistral et USE_OPENROUTER=false
+GEMINI_API_KEY=your_key_here        # Si provider=gemini et USE_OPENROUTER=false
+OPENROUTER_API_KEY=your_key_here     # Si USE_OPENROUTER=true
+
+# Utiliser OpenRouter comme proxy
+USE_OPENROUTER=false  # ou true
+
+# Modèle à utiliser (optionnel)
+LLM_MODEL=mistral-small-latest
+```
+
+### Configuration rapide
+
+**Option 1 : Script interactif (recommandé)**
+```bash
+./scripts/setup-llm-api-key.sh
+```
+
+**Option 2 : Configuration manuelle**
+
+Ajoutez dans votre fichier `.env` :
+
+```bash
+# Pour Mistral direct
+MISTRAL_API_KEY=votre_cle_mistral
+LLM_PROVIDER=mistral
+USE_OPENROUTER=false
+
+# OU pour Gemini direct
+GEMINI_API_KEY=votre_cle_gemini
+LLM_PROVIDER=gemini
+USE_OPENROUTER=false
+
+# OU pour OpenRouter (recommandé pour function calling)
+OPENROUTER_API_KEY=votre_cle_openrouter
+LLM_PROVIDER=mistral  # ou gemini
+USE_OPENROUTER=true
+```
+
+### Utilisation
+
+**Démonstration (sans clé API LLM) :**
+```bash
+npm run demo
+```
+Montre comment fonctionne le flux LLM-MCP sans nécessiter de clé API LLM.
+
+**Client complet (avec clé API LLM) :**
+```bash
+npm run llm
+```
+
+Le client va :
+1. ✅ Démarrer automatiquement le serveur MCP Notion
+2. ✅ Récupérer les 21 outils Notion disponibles
+3. ✅ Les passer au LLM avec function calling
+4. ✅ Permettre de poser des questions en langage naturel
+5. ✅ Le LLM appellera automatiquement les outils Notion nécessaires
+6. ✅ Retourner une réponse en français basée sur les résultats
+
+**Note :** Le client démarre automatiquement le serveur MCP Notion en arrière-plan. Vous n'avez pas besoin de le lancer séparément.
+
 ## 🧪 Test
 
 ### Client de test automatique (STDIO - Recommandé)
