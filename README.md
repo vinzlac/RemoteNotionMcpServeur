@@ -48,18 +48,36 @@ PORT=3000
 
 ## 🏃 Démarrage
 
-### Mode développement (avec rechargement automatique) :
+### Lancer le serveur MCP Notion
+
+Vous avez deux options pour lancer le serveur MCP :
+
+#### Option 1 : Serveur officiel (recommandé)
+```bash
+npm run server:official
+```
+Lance directement le serveur MCP Notion officiel (`@notionhq/notion-mcp-server`).
+
+#### Option 2 : Serveur custom (wrapper)
+```bash
+npm run server:custom
+```
+Lance le wrapper custom (`src/start.ts`) qui utilise également le serveur officiel.
+
+#### Mode développement (ancien, équivalent à server:custom)
 ```bash
 npm run dev
 ```
 
-### Mode production :
+#### Mode production
 ```bash
 npm run build
 npm start
 ```
 
-Le serveur officiel démarrera avec le transport HTTP sur le port configuré (par défaut: 3000).
+Le serveur démarrera avec le transport HTTP sur le port configuré (par défaut: 3000).
+
+**Note :** Le serveur doit être lancé dans un terminal séparé avant d'utiliser le client LLM (`npm run llm`).
 
 ### Authentification
 
@@ -201,6 +219,20 @@ USE_OPENROUTER=true
 
 ### Utilisation
 
+**Important :** Le serveur MCP Notion doit être lancé **avant** d'utiliser le client LLM.
+
+1. **Lancer le serveur MCP** (dans un terminal) :
+   ```bash
+   npm run server:official
+   # ou
+   npm run server:custom
+   ```
+
+2. **Utiliser le client LLM** (dans un autre terminal) :
+   ```bash
+   npm run llm
+   ```
+
 **Démonstration (sans clé API LLM) :**
 ```bash
 npm run demo
@@ -213,14 +245,14 @@ npm run llm
 ```
 
 Le client va :
-1. ✅ Démarrer automatiquement le serveur MCP Notion
+1. ✅ Vérifier que le serveur MCP Notion est accessible
 2. ✅ Récupérer les 21 outils Notion disponibles
 3. ✅ Les passer au LLM avec function calling
 4. ✅ Permettre de poser des questions en langage naturel
 5. ✅ Le LLM appellera automatiquement les outils Notion nécessaires
 6. ✅ Retourner une réponse en français basée sur les résultats
 
-**Note :** Le client démarre automatiquement le serveur MCP Notion en arrière-plan. Vous n'avez pas besoin de le lancer séparément.
+**Note :** Le serveur MCP Notion doit être lancé séparément avec `npm run server:official` ou `npm run server:custom`.
 
 ## 🧪 Test
 

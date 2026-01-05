@@ -90,14 +90,21 @@ class McpNotionClient {
   private sessionId: string;
   private requestId: number = 1;
   private server: ChildProcess | null = null;
+  private autoStartServer: boolean;
 
-  constructor(url: string, authToken: string) {
+  constructor(url: string, authToken: string, autoStartServer: boolean = false) {
     this.url = url;
     this.authToken = authToken;
     this.sessionId = randomUUID();
+    this.autoStartServer = autoStartServer;
   }
 
   async startServer(): Promise<void> {
+    if (!this.autoStartServer) {
+      console.log('ℹ️  Mode client uniquement - le serveur doit être lancé séparément');
+      console.log('   Utilisez: npm run server:official ou npm run server:custom\n');
+      return;
+    }
     const notionToken = process.env.NOTION_TOKEN || process.env.NOTION_API_KEY;
     const port = process.env.PORT || '3000';
     const authToken = process.env.AUTH_TOKEN || this.authToken;
@@ -170,9 +177,13 @@ class McpNotionClient {
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${this.authToken}`,
       'Accept': 'application/json, text/event-stream'
     };
+
+    // Ajouter le token d'authentification seulement s'il est défini
+    if (this.authToken) {
+      headers['Authorization'] = `Bearer ${this.authToken}`;
+    }
 
     if (includeSessionId && this.sessionId) {
       headers['mcp-session-id'] = this.sessionId;
@@ -449,21 +460,35 @@ class LLMMcpNotionClient {
     llmProvider: 'mistral' | 'gemini',
     llmApiKey: string,
     llmModel: string,
-    useOpenRouter: boolean = false
+    useOpenRouter: boolean = false,
+    autoStartServer: boolean = false
   ) {
     const port = process.env.PORT || '3000';
     const mcpUrl = `http://localhost:${port}/mcp`;
-    const mcpAuthToken = process.env.AUTH_TOKEN || randomUUID().replace(/-/g, '');
+    // Utiliser AUTH_TOKEN du .env, ou générer un UUID si non défini
+    // Note: si le serveur a généré un token automatiquement, il faut le mettre dans .env
+    const mcpAuthToken = process.env.AUTH_TOKEN || '';
 
-    this.mcpClient = new McpNotionClient(mcpUrl, mcpAuthToken);
+    if (!mcpAuthToken) {
+      console.warn('⚠️  AUTH_TOKEN non défini dans .env');
+      console.warn('   Si le serveur a généré un token automatiquement,');
+      console.warn('   copiez-le depuis les logs du serveur dans votre fichier .env\n');
+    }
+
+    this.mcpClient = new McpNotionClient(mcpUrl, mcpAuthToken, autoStartServer);
     this.llmClient = new LLMClient(llmProvider, llmApiKey, llmModel, useOpenRouter);
   }
 
   async initialize(): Promise<void> {
     console.log('🔧 Initialisation...\n');
 
-    // Démarrer le serveur MCP
+    // Démarrer le serveur MCP (seulement si autoStartServer est true)
     await this.mcpClient.startServer();
+    
+    // Attendre un peu pour que le serveur soit prêt (si lancé automatiquement)
+    if (this.mcpClient['autoStartServer']) {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
 
     // Initialiser la connexion MCP
     console.log('🔌 Initialisation de la connexion MCP...');
@@ -699,7 +724,130 @@ async function main() {
   console.log(`   Modèle: ${llmModel}`);
   console.log(`   OpenRouter: ${useOpenRouter ? 'Oui' : 'Non'}\n`);
 
-  const client = new LLMMcpNotionClient(llmProvider, llmApiKey, llmModel, useOpenRouter);
+  // Vérifier que le serveur MCP est accessible
+  const port = process.env.PORT || '3000';
+  const mcpUrl = `http://localhost:${port}/mcp`;
+  
+  // Récupérer AUTH_TOKEN depuis .env (dotenv devrait l'avoir chargé)
+  const mcpAuthToken = process.env.AUTH_TOKEN || '';
+  
+  if (mcpAuthToken) {
+    console.log(`🔐 Token d'authentification: ${mcpAuthToken.substring(0, 10)}...`);
+  } else {
+    console.warn('⚠️  AUTH_TOKEN non défini dans .env');
+    console.warn('   Le serveur peut avoir généré un token automatiquement');
+    console.warn('   Vérifiez les logs du serveur pour le token généré');
+  }
+  console.log(`🔍 Vérification de l'accessibilité du serveur...`);
+  console.log(`   URL: ${mcpUrl}\n`);
+
+  try {
+    // Essayer d'abord le health check endpoint si disponible
+    const healthUrl = `http://localhost:${port}/health`;
+    let serverAccessible = false;
+    
+    try {
+      const healthResponse = await fetch(healthUrl, {
+        method: 'GET',
+        headers: mcpAuthToken ? {
+          'Authorization': `Bearer ${mcpAuthToken}`
+        } : {},
+        signal: AbortSignal.timeout(5000) // Timeout de 5 secondes
+      });
+      
+      if (healthResponse.ok) {
+        serverAccessible = true;
+        console.log('✅ Health check réussi\n');
+      }
+    } catch (e) {
+      // Health check endpoint peut ne pas exister ou timeout, continuer avec initialize
+    }
+
+    // Si health check n'a pas fonctionné, essayer initialize
+    if (!serverAccessible) {
+      const initResponse = await fetch(mcpUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json, text/event-stream',
+          ...(mcpAuthToken ? { 'Authorization': `Bearer ${mcpAuthToken}` } : {})
+        },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          method: 'initialize',
+          params: {
+            protocolVersion: '2024-11-05',
+            capabilities: {},
+            clientInfo: { name: 'health-check', version: '1.0.0' }
+          },
+          id: 0
+        }),
+        signal: AbortSignal.timeout(10000) // Timeout de 10 secondes
+      });
+
+      if (initResponse.ok || initResponse.status === 200) {
+        serverAccessible = true;
+        console.log('✅ Serveur MCP Notion accessible (initialize réussi)\n');
+      } else {
+        const errorText = await initResponse.text().catch(() => '');
+        if (initResponse.status === 401) {
+          console.error('❌ Erreur d\'authentification (401 Unauthorized)');
+          console.error('   Le serveur nécessite un token d\'authentification');
+          if (!mcpAuthToken) {
+            console.error('   AUTH_TOKEN n\'est pas défini dans .env');
+            console.error('   Vérifiez les logs du serveur pour le token généré automatiquement');
+            console.error('   Ajoutez-le dans votre fichier .env : AUTH_TOKEN=votre_token\n');
+          } else {
+            console.error(`   Token utilisé: ${mcpAuthToken.substring(0, 10)}...`);
+            console.error('   Vérifiez que ce token correspond au token du serveur');
+            console.error('   Si le serveur a généré un token automatiquement, copiez-le dans .env\n');
+          }
+        } else if (initResponse.status === 400) {
+          console.error(`❌ Erreur 400: Bad Request`);
+          if (errorText) {
+            const errorJson = JSON.parse(errorText).catch(() => null);
+            if (errorJson?.error?.message) {
+              console.error(`   ${errorJson.error.message}\n`);
+            } else {
+              console.error(`   ${errorText.substring(0, 300)}\n`);
+            }
+          }
+        } else {
+          console.error(`❌ Le serveur a retourné une erreur: ${initResponse.status}`);
+          if (errorText) {
+            console.error(`   ${errorText.substring(0, 300)}\n`);
+          }
+        }
+      }
+    }
+
+    if (!serverAccessible) {
+      console.error('❌ Le serveur MCP Notion n\'est pas accessible');
+      console.error(`   URL: ${mcpUrl}`);
+      console.error('\n💡 Veuillez lancer le serveur MCP dans un autre terminal :');
+      console.error('   - Serveur officiel: npm run server:official');
+      console.error('   - Serveur custom:   npm run server:custom');
+      console.error('\n💡 Si le serveur est lancé, vérifiez :');
+      console.error('   - Que le port correspond (par défaut: 3000)');
+      console.error('   - Que AUTH_TOKEN dans .env correspond au token du serveur');
+      console.error('   - Attendez quelques secondes après le démarrage du serveur\n');
+      process.exit(1);
+    }
+  } catch (error) {
+    if (error instanceof Error && error.name === 'TimeoutError') {
+      console.error('❌ Timeout lors de la vérification du serveur');
+      console.error('   Le serveur ne répond pas dans les délais');
+      console.error('   Vérifiez qu\'il est bien lancé et accessible\n');
+    } else {
+      console.error('❌ Impossible de vérifier l\'accessibilité du serveur MCP');
+      console.error(`   Erreur: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+      console.error('   Assurez-vous que le serveur est lancé et accessible\n');
+    }
+    process.exit(1);
+  }
+
+  // Ne pas démarrer automatiquement le serveur - il doit être lancé séparément
+  const client = new LLMMcpNotionClient(llmProvider, llmApiKey, llmModel, useOpenRouter, false);
 
   try {
     await client.initialize();

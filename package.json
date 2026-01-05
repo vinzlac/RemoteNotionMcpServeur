@@ -9,6 +9,8 @@
     "start": "node dist/start.js",
     "dev": "tsx src/start.ts",
     "watch": "tsx watch src/start.ts",
+    "server:official": "tsx src/start-server-official.ts",
+    "server:custom": "tsx src/start-server-custom.ts",
     "test": "tsx src/test-client.ts",
     "test:stdio": "tsx src/test-client-stdio.ts",
     "test:http": "tsx src/test-client-http.ts",
