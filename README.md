@@ -142,24 +142,41 @@ Dans votre application ChatMCP sur iPhone :
 
 ## 🧪 Test
 
-### Client de test automatique
+### Client de test automatique (STDIO - Recommandé)
 
-Un client de test TypeScript est inclus pour vérifier que le serveur fonctionne correctement :
+Un client de test TypeScript utilisant le transport STDIO est inclus. C'est la méthode recommandée car elle fonctionne de manière fiable :
+
+```bash
+npm run test:stdio
+```
+
+Le client de test va :
+- ✅ Démarrer automatiquement le serveur MCP Notion
+- ✅ Tester la méthode `initialize`
+- ✅ Lister les 21 outils disponibles
+- ✅ Tester un outil de recherche
+
+**Résultat attendu :**
+```
+✅ Initialize: OK
+✅ List Tools: OK (21 outils disponibles)
+✅ Test d'outil: OK
+🎉 Le serveur MCP Notion fonctionne correctement avec le transport STDIO !
+```
+
+### Client de test HTTP (Expérimental)
+
+Pour tester le serveur avec le transport HTTP :
 
 ```bash
 # 1. Démarrer le serveur dans un terminal
 npm run dev
 
-# 2. Dans un autre terminal, lancer les tests
+# 2. Dans un autre terminal, lancer les tests HTTP
 npm test
 ```
 
-Le client de test va :
-- ✅ Tester la connexion au serveur
-- ✅ Tester la méthode `initialize`
-- ✅ Lister les outils disponibles
-- ✅ Lister les ressources
-- ✅ Tester un outil de recherche (si disponible)
+**Note :** Le transport HTTP peut avoir des problèmes avec la gestion des sessions. Le transport STDIO est recommandé pour les tests.
 
 ### Test manuel avec curl
 

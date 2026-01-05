@@ -9,7 +9,8 @@
     "start": "node dist/start.js",
     "dev": "tsx src/start.ts",
     "watch": "tsx watch src/start.ts",
-    "test": "tsx src/test-client.ts"
+    "test": "tsx src/test-client.ts",
+    "test:stdio": "tsx src/test-client-stdio.ts"
   },
   "keywords": [
     "mcp",

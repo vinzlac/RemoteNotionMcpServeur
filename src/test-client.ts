@@ -58,6 +58,9 @@ class McpTestClient {
 
     if (this.authToken) {
       headers['Authorization'] = `Bearer ${this.authToken}`;
+    } else {
+      console.warn('⚠️  Aucun token d\'authentification fourni. Le serveur peut rejeter la requête.');
+      console.warn('   Définissez AUTH_TOKEN dans .env ou passez-le au constructeur.');
     }
 
     console.log(`\n📤 Requête: ${method}`);
@@ -160,6 +163,8 @@ async function runTests() {
     console.log(`   Si le serveur a généré un token automatiquement,`);
     console.log(`   copiez-le depuis la console du serveur et ajoutez-le dans .env:`);
     console.log(`   AUTH_TOKEN=votre-token-ici\n`);
+    console.log(`   Ou exportez-le temporairement :`);
+    console.log(`   export AUTH_TOKEN=votre-token-ici\n`);
   }
 
   const client = new McpTestClient({
