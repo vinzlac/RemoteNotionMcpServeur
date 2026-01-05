@@ -10,7 +10,8 @@
     "dev": "tsx src/start.ts",
     "watch": "tsx watch src/start.ts",
     "test": "tsx src/test-client.ts",
-    "test:stdio": "tsx src/test-client-stdio.ts"
+    "test:stdio": "tsx src/test-client-stdio.ts",
+    "test:http": "tsx src/test-client-http.ts"
   },
   "keywords": [
     "mcp",

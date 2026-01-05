@@ -166,17 +166,19 @@ Le client de test va :
 
 ### Client de test HTTP (Expérimental)
 
-Pour tester le serveur avec le transport HTTP :
+Pour tester le serveur avec le transport HTTP Streamable :
 
 ```bash
-# 1. Démarrer le serveur dans un terminal
-npm run dev
-
-# 2. Dans un autre terminal, lancer les tests HTTP
-npm test
+npm run test:http
 ```
 
-**Note :** Le transport HTTP peut avoir des problèmes avec la gestion des sessions. Le transport STDIO est recommandé pour les tests.
+**⚠️  Note importante :** Le transport HTTP du serveur MCP Notion officiel peut avoir des problèmes avec la gestion des sessions (erreur "No valid session ID provided"). Si vous rencontrez ce problème, utilisez plutôt le transport STDIO qui est plus fiable :
+
+```bash
+npm run test:stdio
+```
+
+Le client de test HTTP démarre automatiquement le serveur et teste les mêmes fonctionnalités que le client STDIO.
 
 ### Test manuel avec curl
 
