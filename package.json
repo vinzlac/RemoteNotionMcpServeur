@@ -1,0 +1,31 @@
+{
+  "name": "remote-notion-mcp-server",
+  "version": "1.0.0",
+  "description": "Wrapper pour le serveur MCP Notion officiel avec support HTTP pour ChatMCP",
+  "main": "dist/start.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/start.js",
+    "dev": "tsx src/start.ts",
+    "watch": "tsx watch src/start.ts",
+    "test": "tsx src/test-client.ts"
+  },
+  "keywords": [
+    "mcp",
+    "notion",
+    "remote",
+    "server"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@notionhq/notion-mcp-server": "latest",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.6",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  }
+}
