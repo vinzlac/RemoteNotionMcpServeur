@@ -280,9 +280,9 @@ async function runTests() {
       console.log('ℹ️  La méthode resources/list n\'est pas disponible (normal pour ce serveur)');
     }
 
-    // Test 4: Test d'un outil simple
+    // Test 4: Recherche de pages
     console.log('\n' + '='.repeat(60));
-    console.log('TEST 4: Test d\'un outil (recherche)');
+    console.log('TEST 4: Recherche de pages (API-post-search)');
     console.log('='.repeat(60));
     
     let searchToolName: string | null = null;
@@ -290,27 +290,181 @@ async function runTests() {
     
     if (toolsResult.result && typeof toolsResult.result === 'object' && 'tools' in toolsResult.result) {
       const tools = (toolsResult.result as { tools: Array<{ name: string }> }).tools;
-      // Chercher un outil de recherche
+      // Chercher l'outil de recherche
       searchToolName = tools.find(t => 
         t.name.toLowerCase().includes('search') || 
-        t.name.toLowerCase().includes('v1')
+        t.name === 'API-post-search'
       )?.name || null;
     }
 
     if (searchToolName) {
-      console.log(`   Test de l'outil: ${searchToolName}`);
+      console.log(`   Utilisation de l'outil: ${searchToolName}`);
+      
+      // Essayer d'abord une recherche vide pour obtenir toutes les pages
+      console.log(`   Recherche de pages (requête vide pour obtenir toutes les pages)...`);
+      
       searchResult = await client.callTool(searchToolName, {
-        query: 'test'
+        query: ''
       });
+      
+      // Si aucune page n'est trouvée avec une requête vide, essayer avec "test"
+      if (searchResult.result && typeof searchResult.result === 'object' && 'content' in searchResult.result) {
+        const content = (searchResult.result as { content: Array<{ type: string; text?: string }> }).content;
+        if (content.length > 0 && content[0].type === 'text' && content[0].text) {
+          try {
+            const searchData = JSON.parse(content[0].text);
+            let pages: Array<any> = [];
+            
+            if (Array.isArray(searchData)) {
+              pages = searchData;
+            } else if (searchData.results && Array.isArray(searchData.results)) {
+              pages = searchData.results;
+            } else if (searchData.pages && Array.isArray(searchData.pages)) {
+              pages = searchData.pages;
+            } else if (searchData.data && Array.isArray(searchData.data)) {
+              pages = searchData.data;
+            }
+            
+            if (pages.length === 0) {
+              console.log(`   Aucune page trouvée avec une requête vide, essai avec "test"...`);
+              searchResult = await client.callTool(searchToolName, {
+                query: 'test'
+              });
+            }
+          } catch (e) {
+            // Continuer avec le résultat actuel
+          }
+        }
+      }
 
       if (searchResult.error) {
         console.warn(`\n⚠️  Le test ${searchToolName} a retourné une erreur: ${searchResult.error.message}`);
         console.warn('   Cela peut être normal si aucune page correspondante n\'est trouvée.');
       } else {
         console.log(`\n✅ L'outil ${searchToolName} a fonctionné !`);
+        
+        // Afficher les 3 premières pages trouvées
+        if (searchResult.result && typeof searchResult.result === 'object' && 'content' in searchResult.result) {
+          const content = (searchResult.result as { content: Array<{ type: string; text?: string }> }).content;
+          
+          if (content.length > 0 && content[0].type === 'text' && content[0].text) {
+            try {
+              const searchData = JSON.parse(content[0].text);
+              
+              // Le format de réponse peut varier, chercher les résultats
+              let pages: Array<any> = [];
+              
+              if (Array.isArray(searchData)) {
+                pages = searchData;
+              } else if (searchData.results && Array.isArray(searchData.results)) {
+                pages = searchData.results;
+              } else if (searchData.pages && Array.isArray(searchData.pages)) {
+                pages = searchData.pages;
+              } else if (searchData.data && Array.isArray(searchData.data)) {
+                pages = searchData.data;
+              }
+              
+              if (pages.length > 0) {
+                const pagesToShow = pages.slice(0, 3);
+                console.log(`\n📄 Pages trouvées (${pages.length} au total, affichage des 3 premières):`);
+                
+                pagesToShow.forEach((page: any, index: number) => {
+                  console.log(`\n   ${index + 1}. Page:`);
+                  
+                  // Extraire les informations de la page
+                  if (page.id) {
+                    console.log(`      ID: ${page.id}`);
+                  }
+                  
+                  // Chercher le titre dans différentes structures
+                  let title: string | null = null;
+                  
+                  // Format 1: page.properties avec type title
+                  if (page.properties) {
+                    const titleProp = Object.values(page.properties).find((prop: any) => 
+                      prop.type === 'title' || prop.title
+                    ) as any;
+                    
+                    if (titleProp) {
+                      if (titleProp.title && Array.isArray(titleProp.title) && titleProp.title.length > 0) {
+                        title = titleProp.title.map((t: any) => t.plain_text || t.text || t || '').join('');
+                      } else if (titleProp.plain_text) {
+                        title = titleProp.plain_text;
+                      } else if (typeof titleProp === 'string') {
+                        title = titleProp;
+                      }
+                    }
+                  }
+                  
+                  // Format 2: title directement dans la page
+                  if (!title && page.title) {
+                    if (Array.isArray(page.title)) {
+                      title = page.title.map((t: any) => t.plain_text || t.text || t || '').join('');
+                    } else if (typeof page.title === 'string') {
+                      title = page.title;
+                    } else if (page.title.plain_text) {
+                      title = page.title.plain_text;
+                    }
+                  }
+                  
+                  // Format 3: name dans la page
+                  if (!title && page.name) {
+                    title = page.name;
+                  }
+                  
+                  if (title) {
+                    console.log(`      Titre: ${title}`);
+                  } else {
+                    console.log(`      Titre: (sans titre)`);
+                  }
+                  
+                  // Afficher l'URL si disponible
+                  if (page.url) {
+                    console.log(`      URL: ${page.url}`);
+                  }
+                  
+                  // Afficher le type d'objet
+                  if (page.object) {
+                    console.log(`      Type: ${page.object}`);
+                  }
+                  
+                  // Afficher la date de création si disponible
+                  if (page.created_time) {
+                    const date = new Date(page.created_time);
+                    console.log(`      Créé le: ${date.toLocaleDateString('fr-FR')} ${date.toLocaleTimeString('fr-FR')}`);
+                  }
+                  
+                  // Afficher la date de dernière modification si disponible
+                  if (page.last_edited_time) {
+                    const date = new Date(page.last_edited_time);
+                    console.log(`      Modifié le: ${date.toLocaleDateString('fr-FR')} ${date.toLocaleTimeString('fr-FR')}`);
+                  }
+                });
+                
+                if (pages.length > 3) {
+                  console.log(`\n   ... et ${pages.length - 3} autre(s) page(s)`);
+                }
+              } else {
+                console.log('\n   ℹ️  Aucune page trouvée');
+                console.log('   💡 Pour que la recherche fonctionne:');
+                console.log('      1. Partagez vos pages Notion avec votre intégration');
+                console.log('      2. Allez sur chaque page → "..." → "Add connections"');
+                console.log('      3. Sélectionnez votre intégration Notion');
+              }
+            } catch (parseError) {
+              console.log('\n   Résultat reçu (format non JSON ou structure différente):');
+              const resultStr = content[0].text;
+              if (resultStr.length > 500) {
+                console.log(`   ${resultStr.substring(0, 500)}...`);
+              } else {
+                console.log(`   ${resultStr}`);
+              }
+            }
+          }
+        }
       }
     } else {
-      console.log('\n⚠️  Aucun outil de recherche trouvé dans la liste des outils.');
+      console.log('\n⚠️  L\'outil API-post-search n\'a pas été trouvé dans la liste des outils.');
       console.log('   Test d\'outil ignoré.');
     }
 
