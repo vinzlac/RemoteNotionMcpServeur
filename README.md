@@ -44,40 +44,54 @@ cp env.example .env
 ```
 NOTION_TOKEN=ntn_votre_cle_api_ici
 PORT=3000
+AUTH_TOKEN=your-secret-token-here  # Optionnel (généré automatiquement si non défini)
 ```
 
-## 🏃 Démarrage
+## 🏃 Démarrage du serveur MCP
 
-### Lancer le serveur MCP Notion
+Le serveur MCP Notion doit être lancé **séparément** avant d'utiliser le client LLM ou d'autres clients.
 
-Vous avez deux options pour lancer le serveur MCP :
+### Option 1 : Serveur officiel (recommandé)
 
-#### Option 1 : Serveur officiel (recommandé)
+Lance directement le serveur MCP Notion officiel :
+
 ```bash
 npm run server:official
 ```
-Lance directement le serveur MCP Notion officiel (`@notionhq/notion-mcp-server`).
 
-#### Option 2 : Serveur custom (wrapper)
+**Avantages :**
+- Lancement direct, sans wrapper
+- Moins de processus intermédiaires
+- Plus simple et rapide
+
+### Option 2 : Serveur custom (wrapper)
+
+Lance le wrapper custom qui utilise également le serveur officiel :
+
 ```bash
 npm run server:custom
 ```
-Lance le wrapper custom (`src/start.ts`) qui utilise également le serveur officiel.
 
-#### Mode développement (ancien, équivalent à server:custom)
+**Avantages :**
+- Passe par notre wrapper (`src/start.ts`)
+- Permet d'ajouter des fonctionnalités personnalisées si nécessaire
+
+### Mode développement (équivalent à server:custom)
+
 ```bash
 npm run dev
 ```
 
-#### Mode production
+### Mode production
+
 ```bash
 npm run build
 npm start
 ```
 
-Le serveur démarrera avec le transport HTTP sur le port configuré (par défaut: 3000).
+**Note :** Les deux options lancent le même serveur officiel (`@notionhq/notion-mcp-server`) via `npx`. La différence est que `server:custom` passe par notre wrapper TypeScript.
 
-**Note :** Le serveur doit être lancé dans un terminal séparé avant d'utiliser le client LLM (`npm run llm`).
+Le serveur démarrera avec le transport HTTP sur le port configuré (par défaut: 3000).
 
 ### Authentification
 
@@ -85,6 +99,8 @@ Le serveur utilise l'authentification par bearer token pour sécuriser l'accès 
 
 - **Développement** : Si `AUTH_TOKEN` n'est pas défini, un token sera généré automatiquement et affiché dans la console
 - **Production** : Définissez `AUTH_TOKEN` dans votre fichier `.env` pour utiliser un token personnalisé
+
+**Important :** Si le serveur génère un token automatiquement, copiez-le dans votre fichier `.env` pour que le client LLM puisse s'y connecter.
 
 ## 🌐 Accès à distance
 
@@ -116,14 +132,6 @@ Utilisez dans ChatMCP : `https://abc123.ngrok.io/mcp`
 # Installer cloudflared
 cloudflared tunnel --url http://localhost:3000
 ```
-
-### Option 3 : Déployer sur un serveur cloud
-
-Déployez ce serveur sur :
-- **Railway** : https://railway.app
-- **Render** : https://render.com
-- **Heroku** : https://heroku.com
-- **VPS** : DigitalOcean, AWS EC2, etc.
 
 ## 📱 Configuration dans ChatMCP
 
@@ -198,24 +206,7 @@ LLM_MODEL=mistral-small-latest
 
 **Option 2 : Configuration manuelle**
 
-Ajoutez dans votre fichier `.env` :
-
-```bash
-# Pour Mistral direct
-MISTRAL_API_KEY=votre_cle_mistral
-LLM_PROVIDER=mistral
-USE_OPENROUTER=false
-
-# OU pour Gemini direct
-GEMINI_API_KEY=votre_cle_gemini
-LLM_PROVIDER=gemini
-USE_OPENROUTER=false
-
-# OU pour OpenRouter (recommandé pour function calling)
-OPENROUTER_API_KEY=votre_cle_openrouter
-LLM_PROVIDER=mistral  # ou gemini
-USE_OPENROUTER=true
-```
+Ajoutez les variables dans votre fichier `.env` (voir ci-dessus).
 
 ### Utilisation
 
@@ -254,7 +245,7 @@ Le client va :
 
 **Note :** Le serveur MCP Notion doit être lancé séparément avec `npm run server:official` ou `npm run server:custom`.
 
-## 🧪 Test
+## 🧪 Tests
 
 ### Client de test automatique (STDIO - Recommandé)
 
@@ -264,80 +255,166 @@ Un client de test TypeScript utilisant le transport STDIO est inclus. C'est la m
 npm run test:stdio
 ```
 
-Le client de test va :
-- ✅ Démarrer automatiquement le serveur MCP Notion
-- ✅ Tester la méthode `initialize`
-- ✅ Lister les 21 outils disponibles
-- ✅ Tester un outil de recherche
+### Client de test HTTP
 
-**Résultat attendu :**
-```
-✅ Initialize: OK
-✅ List Tools: OK (21 outils disponibles)
-✅ Test d'outil: OK
-🎉 Le serveur MCP Notion fonctionne correctement avec le transport STDIO !
-```
-
-### Client de test HTTP (Expérimental)
-
-Pour tester le serveur avec le transport HTTP Streamable :
+Teste le serveur via HTTP (nécessite que le serveur soit lancé) :
 
 ```bash
+# Terminal 1 : Lancer le serveur
+npm run server:official
+
+# Terminal 2 : Lancer les tests
 npm run test:http
 ```
 
-**⚠️  Note importante :** Le transport HTTP du serveur MCP Notion officiel peut avoir des problèmes avec la gestion des sessions (erreur "No valid session ID provided"). Si vous rencontrez ce problème, utilisez plutôt le transport STDIO qui est plus fiable :
+### Test API Notion directe (sans MCP)
+
+Teste directement l'API Notion sans passer par MCP :
 
 ```bash
-npm run test:stdio
+npm run test:api
 ```
 
-Le client de test HTTP démarre automatiquement le serveur et teste les mêmes fonctionnalités que le client STDIO.
+## 📚 Scripts disponibles
 
-### Test manuel avec curl
+| Script | Description |
+|--------|-------------|
+| `npm run server:official` | Lance le serveur MCP Notion officiel directement |
+| `npm run server:custom` | Lance le serveur MCP Notion via le wrapper custom |
+| `npm run dev` | Lance le serveur en mode développement (équivalent à server:custom) |
+| `npm run build` | Compile TypeScript vers JavaScript |
+| `npm start` | Lance le serveur compilé (production) |
+| `npm run llm` | Lance le client LLM interactif (nécessite serveur lancé) |
+| `npm run demo` | Démonstration du flux LLM-MCP (sans clé API LLM) |
+| `npm run test:stdio` | Tests avec transport STDIO |
+| `npm run test:http` | Tests avec transport HTTP (nécessite serveur lancé) |
+| `npm run test:api` | Tests API Notion directe |
 
-Vous pouvez aussi tester manuellement avec curl :
+## 🏗️ Architecture
 
-```bash
-# Le serveur affichera l'URL et le token d'authentification au démarrage
-# Utilisez ces informations pour tester avec curl :
+Voir le fichier [docs/architecture.md](docs/architecture.md) pour les diagrammes détaillés au format Mermaid.
 
-curl -H "Authorization: Bearer VOTRE_AUTH_TOKEN" \
-     -H "Content-Type: application/json" \
-     -H "mcp-session-id: test-session" \
-     -d '{"jsonrpc": "2.0", "method": "initialize", "params": {}, "id": 1}' \
-     http://localhost:3000/mcp
+### Vue d'ensemble
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    Client LLM                            │
+│              (npm run llm)                               │
+│  ┌──────────────────────────────────────────────────┐   │
+│  │  LLM (Mistral/Gemini)                           │   │
+│  │  - Function calling                             │   │
+│  │  - Génération de réponses                       │   │
+│  └──────────────┬──────────────────────────────────┘   │
+│                 │ Appels HTTP                           │
+└─────────────────┼───────────────────────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────────────────────┐
+│         Serveur MCP Notion (HTTP)                        │
+│  ┌──────────────────────────────────────────────────┐   │
+│  │  @notionhq/notion-mcp-server                     │   │
+│  │  - Transport HTTP                                │   │
+│  │  - 21 outils Notion                              │   │
+│  │  - Authentification Bearer token                 │   │
+│  └──────────────┬──────────────────────────────────┘   │
+│                 │ API Notion                            │
+└─────────────────┼───────────────────────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────────────────────┐
+│                    API Notion                            │
+│              (https://api.notion.com)                    │
+└─────────────────────────────────────────────────────────┘
 ```
 
-### Configuration du client de test
+### Diagrammes Mermaid
 
-Le client de test utilise les variables d'environnement suivantes :
-- `MCP_SERVER_URL` : URL du serveur (par défaut: `http://localhost:3000/mcp`)
-- `AUTH_TOKEN` : Token d'authentification (optionnel, depuis `.env`)
-- `PORT` : Port du serveur (par défaut: 3000)
+Les diagrammes suivants sont disponibles dans [docs/architecture.md](docs/architecture.md) :
+
+- **Diagramme d'architecture** : Vue d'ensemble des composants
+- **Diagramme de séquence - Client LLM** : Flux d'une requête LLM
+- **Diagramme de séquence - ChatMCP** : Flux d'une requête depuis iPhone
+- **Diagramme de séquence - Démarrage** : Processus de démarrage du serveur
+- **Architecture des composants** : Relations entre les modules
+- **Flux de données** : Logique de traitement des requêtes
+
+## 🔧 Dépannage
+
+### Le client LLM ne peut pas se connecter au serveur
+
+1. Vérifiez que le serveur est lancé : `npm run server:official`
+2. Vérifiez que le port correspond (par défaut: 3000)
+3. Vérifiez que `AUTH_TOKEN` dans `.env` correspond au token du serveur
+4. Attendez quelques secondes après le démarrage du serveur
+
+### Erreur "No valid session ID provided"
+
+C'est un problème connu avec certaines versions du serveur MCP Notion officiel. Le client a été corrigé pour gérer cela automatiquement. Si le problème persiste :
+
+1. Vérifiez que vous utilisez la dernière version : `npm update @notionhq/notion-mcp-server`
+2. Utilisez le transport STDIO pour les tests : `npm run test:stdio`
+
+### Le serveur ne démarre pas
+
+1. Vérifiez que `NOTION_TOKEN` est défini dans `.env`
+2. Vérifiez que le port 3000 n'est pas déjà utilisé
+3. Vérifiez les logs d'erreur dans la console
 
 ## 📝 Structure du projet
 
 ```
 RemoteNotionMcpServeur/
+├── docs/
+│   └── architecture.md             # Diagrammes d'architecture Mermaid
 ├── src/
-│   ├── start.ts          # Script de démarrage TypeScript qui lance le serveur officiel
-│   └── test-client.ts    # Client de test pour vérifier les appels MCP
-├── dist/                 # Code compilé (généré)
-├── .env                  # Variables d'environnement (à créer)
-├── env.example           # Exemple de configuration
-├── package.json
-├── tsconfig.json         # Configuration TypeScript
-└── README.md
+│   ├── start.ts                    # Wrapper pour lancer le serveur officiel
+│   ├── start-server-official.ts    # Script pour lancer le serveur officiel
+│   ├── start-server-custom.ts      # Script pour lancer le serveur custom
+│   ├── llm-mcp-client.ts           # Client LLM avec intégration MCP
+│   ├── llm-mcp-demo.ts             # Démonstration du flux LLM-MCP
+│   ├── test-client-http.ts         # Tests HTTP
+│   ├── test-client-stdio.ts        # Tests STDIO
+│   └── test-api-direct.ts          # Tests API Notion directe
+├── scripts/
+│   └── setup-llm-api-key.sh        # Script interactif pour configurer les clés API LLM
+├── .env                            # Variables d'environnement (non commité)
+├── env.example                     # Exemple de fichier .env
+├── package.json                     # Dépendances et scripts
+├── tsconfig.json                    # Configuration TypeScript
+└── README.md                        # Ce fichier
 ```
 
-## 🔗 Ressources
+## 📊 Diagrammes d'architecture
 
-- [Serveur MCP Notion officiel](https://github.com/makenotion/notion-mcp-server)
-- [Package npm](https://www.npmjs.com/package/@notionhq/notion-mcp-server)
-- [Documentation MCP](https://modelcontextprotocol.io)
-- [API Notion](https://developers.notion.com)
+Des diagrammes détaillés au format Mermaid sont disponibles dans [docs/architecture.md](docs/architecture.md) :
+
+- **Diagramme d'architecture** : Vue d'ensemble des composants et leurs relations
+- **Diagramme de séquence - Client LLM** : Flux complet d'une requête depuis l'utilisateur jusqu'à Notion
+- **Diagramme de séquence - ChatMCP** : Flux d'une requête depuis l'iPhone
+- **Diagramme de séquence - Démarrage** : Processus de démarrage du serveur
+- **Architecture des composants** : Relations entre les modules TypeScript/Node.js
+- **Flux de données** : Logique de traitement des requêtes avec décisions
+
+Ces diagrammes peuvent être visualisés dans :
+- GitHub (rendu automatique des fichiers .md avec Mermaid)
+- VS Code avec l'extension Mermaid
+- Tout éditeur Markdown supportant Mermaid
 
 ## 📄 Licence
 
-MIT
+Ce projet est open source et disponible sous la licence MIT.
+
+## 🔗 Liens utiles
+
+- [Serveur MCP Notion officiel](https://github.com/makenotion/notion-mcp-server)
+- [Documentation Notion API](https://developers.notion.com/)
+- [Protocole MCP](https://modelcontextprotocol.io/)
+- [ChatMCP](https://github.com/your-repo/chatmcp) (si disponible)
+
+## 💡 Support
+
+Pour des questions ou des problèmes :
+
+1. Vérifiez la section [Dépannage](#-dépannage)
+2. Consultez les [issues GitHub](https://github.com/makenotion/notion-mcp-server/issues) du serveur officiel
+3. Vérifiez que votre clé API Notion est valide et que les pages sont partagées avec l'intégration
