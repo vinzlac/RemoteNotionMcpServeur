@@ -56,7 +56,7 @@ Le serveur MCP Notion doit être lancé **séparément** avant d'utiliser le cli
 Lance directement le serveur MCP Notion officiel :
 
 ```bash
-npm run server:official
+pnpm run server:official
 ```
 
 **Avantages :**
@@ -85,7 +85,7 @@ npm run dev
 ### Mode production
 
 ```bash
-npm run build
+pnpm run build
 npm start
 ```
 
@@ -214,14 +214,14 @@ Ajoutez les variables dans votre fichier `.env` (voir ci-dessus).
 
 1. **Lancer le serveur MCP** (dans un terminal) :
    ```bash
-   npm run server:official
+   pnpm run server:official
    # ou
    npm run server:custom
    ```
 
 2. **Utiliser le client LLM** (dans un autre terminal) :
    ```bash
-   npm run llm
+   pnpm run llm
    ```
 
 **Démonstration (sans clé API LLM) :**
@@ -243,7 +243,7 @@ Le client va :
 5. ✅ Le LLM appellera automatiquement les outils Notion nécessaires
 6. ✅ Retourner une réponse en français basée sur les résultats
 
-**Note :** Le serveur MCP Notion doit être lancé séparément avec `npm run server:official` ou `npm run server:custom`.
+**Note :** Le serveur MCP Notion doit être lancé séparément avec `pnpm run server:official` ou `npm run server:custom`.
 
 ## 🌐 Client MCP Générique
 
@@ -281,7 +281,7 @@ LLM_MODEL=mistral-small-latest
 1. **Lancer le serveur MCP** de votre choix (dans un terminal) :
    ```bash
    # Exemple avec le serveur Notion
-   npm run server:official
+   pnpm run server:official
    
    # Ou n'importe quel autre serveur MCP
    # Assurez-vous qu'il écoute sur l'URL configurée dans MCP_SERVER_URL
@@ -340,12 +340,12 @@ npm run test:api
 
 | Script | Description |
 |--------|-------------|
-| `npm run server:official` | Lance le serveur MCP Notion officiel directement |
+| `pnpm run server:official` | Lance le serveur MCP Notion officiel directement |
 | `npm run server:custom` | Lance le serveur MCP Notion via le wrapper custom |
 | `npm run dev` | Lance le serveur en mode développement (équivalent à server:custom) |
 | `npm run build` | Compile TypeScript vers JavaScript |
-| `npm start` | Lance le serveur compilé (production) |
-| `npm run llm` | Lance le client LLM interactif (nécessite serveur lancé) |
+| `pnpm start` | Lance le serveur compilé (production) |
+| `pnpm run llm` | Lance le client LLM interactif (nécessite serveur lancé) |
 | `npm run client:generic` | Lance le client MCP générique (fonctionne avec n'importe quel serveur MCP) |
 | `npm run demo` | Démonstration du flux LLM-MCP (sans clé API LLM) |
 | `npm run test:stdio` | Tests avec transport STDIO |
@@ -361,7 +361,7 @@ Voir le fichier [docs/architecture.md](docs/architecture.md) pour les diagrammes
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                    Client LLM                            │
-│              (npm run llm)                               │
+│              (pnpm run llm)                               │
 │  ┌──────────────────────────────────────────────────┐   │
 │  │  LLM (Mistral/Gemini)                           │   │
 │  │  - Function calling                             │   │
@@ -404,7 +404,7 @@ Les diagrammes suivants sont disponibles dans [docs/architecture.md](docs/archit
 
 ### Le client LLM ne peut pas se connecter au serveur
 
-1. Vérifiez que le serveur est lancé : `npm run server:official`
+1. Vérifiez que le serveur est lancé : `pnpm run server:official`
 2. Vérifiez que le port correspond (par défaut: 3000)
 3. Vérifiez que `AUTH_TOKEN` dans `.env` correspond au token du serveur
 4. Attendez quelques secondes après le démarrage du serveur
@@ -413,7 +413,7 @@ Les diagrammes suivants sont disponibles dans [docs/architecture.md](docs/archit
 
 C'est un problème connu avec certaines versions du serveur MCP Notion officiel. Le client a été corrigé pour gérer cela automatiquement. Si le problème persiste :
 
-1. Vérifiez que vous utilisez la dernière version : `npm update @notionhq/notion-mcp-server`
+1. Vérifiez que vous utilisez la dernière version : `pnpm update @notionhq/notion-mcp-server`
 2. Utilisez le transport STDIO pour les tests : `npm run test:stdio`
 
 ### Le serveur ne démarre pas

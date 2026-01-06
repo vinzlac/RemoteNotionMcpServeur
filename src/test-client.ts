@@ -273,7 +273,7 @@ async function runTests() {
     console.error('='.repeat(60));
     console.error(`\n${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     console.error('\n💡 Vérifications:');
-    console.error('   1. Le serveur est-il démarré ? (npm start ou npm run dev)');
+    console.error('   1. Le serveur est-il démarré ? (pnpm start ou pnpm run dev)');
     console.error('   2. L\'URL est-elle correcte ?');
     console.error('   3. Le token d\'authentification est-il correct ?');
     console.error('   4. La clé API Notion est-elle valide ?\n');

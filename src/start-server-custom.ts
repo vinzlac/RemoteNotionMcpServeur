@@ -7,7 +7,7 @@
  * au lieu de lancer un processus externe.
  * 
  * Usage:
- *   npm run server:custom
+ *   pnpm run server:custom
  */
 
 import dotenv from 'dotenv';

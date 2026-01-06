@@ -7,7 +7,7 @@
  * avec le transport HTTP pour permettre l'accès à distance.
  * 
  * Usage:
- *   npm run server:official
+ *   pnpm run server:official
  */
 
 import { spawn, ChildProcess } from 'child_process';

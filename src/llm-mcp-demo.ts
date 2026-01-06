@@ -395,7 +395,7 @@ async function demonstrateLLMMcpFlow() {
     console.log('   6. ✅ LLM génère une réponse (simulée)');
     console.log('\n💡 Pour utiliser le vrai client LLM:');
     console.log('   1. Ajoutez une clé API LLM dans votre fichier .env');
-    console.log('   2. Lancez: npm run llm');
+    console.log('   2. Lancez: pnpm run llm');
     console.log('   3. Posez vos questions en langage naturel !\n');
 
     await mcpClient.shutdown();

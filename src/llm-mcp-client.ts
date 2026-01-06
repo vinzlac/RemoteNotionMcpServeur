@@ -102,7 +102,7 @@ class McpNotionClient {
   async startServer(): Promise<void> {
     if (!this.autoStartServer) {
       console.log('ℹ️  Mode client uniquement - le serveur doit être lancé séparément');
-      console.log('   Utilisez: npm run server:official ou npm run server:custom\n');
+      console.log('   Utilisez: pnpm run server:official ou pnpm run server:custom\n');
       return;
     }
     const notionToken = process.env.NOTION_TOKEN || process.env.NOTION_API_KEY;
@@ -855,8 +855,8 @@ async function main() {
       console.error('❌ Le serveur MCP Notion n\'est pas accessible');
       console.error(`   URL: ${mcpUrl}`);
       console.error('\n💡 Veuillez lancer le serveur MCP dans un autre terminal :');
-      console.error('   - Serveur officiel: npm run server:official');
-      console.error('   - Serveur custom:   npm run server:custom');
+      console.error('   - Serveur officiel: pnpm run server:official');
+      console.error('   - Serveur custom:   pnpm run server:custom');
       console.error('\n💡 Si le serveur est lancé, vérifiez :');
       console.error('   - Que le port correspond (par défaut: 3000)');
       console.error('   - Que AUTH_TOKEN dans .env correspond au token du serveur');

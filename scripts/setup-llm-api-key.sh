@@ -65,7 +65,7 @@ case $choice in
         echo ""
         echo "✅ Configuration Mistral ajoutée dans .env"
         echo ""
-        echo "Vous pouvez maintenant lancer: npm run llm"
+        echo "Vous pouvez maintenant lancer: pnpm run llm"
         ;;
         
     2)
@@ -105,7 +105,7 @@ case $choice in
         echo ""
         echo "✅ Configuration Gemini ajoutée dans .env"
         echo ""
-        echo "Vous pouvez maintenant lancer: npm run llm"
+        echo "Vous pouvez maintenant lancer: pnpm run llm"
         ;;
         
     3)
@@ -150,7 +150,7 @@ case $choice in
         echo "✅ Configuration OpenRouter ajoutée dans .env"
         echo "   Provider: $provider"
         echo ""
-        echo "Vous pouvez maintenant lancer: npm run llm"
+        echo "Vous pouvez maintenant lancer: pnpm run llm"
         ;;
         
     4)
