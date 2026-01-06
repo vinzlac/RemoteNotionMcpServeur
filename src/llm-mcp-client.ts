@@ -523,6 +523,11 @@ class LLMMcpNotionClient {
         enhancedDescription = 'Recherche et liste les pages Notion. Utilise cet outil pour répondre aux questions sur les pages disponibles, pour lister les pages, ou pour trouver des pages par titre/mot-clé. Pour lister toutes les pages, utilise une requête vide (query: "").';
       }
       
+      // Améliorer la description des outils pour récupérer les blocs enfants
+      if (tool.name === 'API-get-block-children' || tool.name.toLowerCase().includes('block-children') || tool.name.toLowerCase().includes('block_children')) {
+        enhancedDescription = (tool.description || '') + ' IMPORTANT: Cet outil retourne seulement les blocs de premier niveau. Pour récupérer TOUS les blocs d\'une page (y compris les enfants), tu dois appeler cet outil récursivement pour chaque bloc qui a has_children: true. Pour compter tous les blocs d\'une page, commence par récupérer les blocs enfants de la page (block_id = page_id), puis pour chaque bloc retourné avec has_children: true, récupère ses blocs enfants récursivement.';
+      }
+      
       return {
         ...tool,
         description: enhancedDescription
@@ -543,15 +548,34 @@ Tu as accès à ${this.tools.length} outils Notion pour rechercher, lire, créer
    - Pour rechercher par mot-clé : utilise API-post-search avec query: "mot-clé"
    - C'est l'outil principal pour répondre aux questions sur les pages disponibles
 
-2. **Ne demande JAMAIS à l'utilisateur** :
+2. **Pour récupérer les blocs d'une page** :
+   - IMPORTANT : L'API Notion retourne seulement les blocs de premier niveau par défaut
+   - Pour compter TOUS les blocs d'une page (y compris les blocs enfants), tu DOIS :
+     a) D'abord récupérer les blocs de premier niveau avec l'outil approprié (ex: API-get-block-children)
+     b) Pour CHAQUE bloc qui a des enfants (has_children: true), récupérer récursivement ses blocs enfants
+     c) Compter TOUS les blocs récupérés (premier niveau + tous les enfants récursifs)
+   - Les tables contiennent des lignes (table_row) qui sont des blocs enfants - ne les oublie pas !
+   - Les listes peuvent avoir des éléments imbriqués - compte-les tous
+   - Exemple : Si une page a 10 blocs de premier niveau, et que 3 d'entre eux ont chacun 5 enfants, le total est 10 + (3 × 5) = 25 blocs
+   - Utilise plusieurs appels d'outils si nécessaire pour récupérer tous les blocs enfants récursivement
+
+3. **Pour compter les blocs d'une page** :
+   - Utilise l'outil pour récupérer les blocs enfants de la page (block_id = page_id)
+   - Pour chaque bloc retourné, vérifie si has_children est true
+   - Si oui, récupère les blocs enfants de ce bloc (récursivement si nécessaire)
+   - Compte TOUS les blocs : niveau principal + tous les enfants + enfants des enfants, etc.
+   - Regroupe par type de bloc pour donner une répartition détaillée
+
+4. **Ne demande JAMAIS à l'utilisateur** :
    - L'ID de l'espace de travail
    - L'ID d'une page (utilise la recherche pour trouver les pages)
    - Des informations que tu peux obtenir via les outils
 
-3. **Exemples d'utilisation** :
+5. **Exemples d'utilisation** :
    - Question: "Quelles sont mes pages ?" → Utilise API-post-search avec query: ""
    - Question: "Trouve les pages avec 'test'" → Utilise API-post-search avec query: "test"
    - Question: "Liste mes pages Notion" → Utilise API-post-search avec query: ""
+   - Question: "Combien de blocs dans la page X ?" → Récupère récursivement TOUS les blocs (premier niveau + enfants) puis compte-les tous
 
 Réponds en français de manière naturelle et utile. Utilise directement les outils sans demander d'informations supplémentaires à l'utilisateur.`
     });
@@ -579,6 +603,11 @@ Réponds en français de manière naturelle et utile. Utilise directement les ou
         // Améliorer la description de l'outil de recherche
         if (tool.name === 'API-post-search' || tool.name.toLowerCase().includes('search')) {
           enhancedDescription = 'Recherche et liste les pages Notion. Utilise cet outil pour répondre aux questions sur les pages disponibles, pour lister les pages, ou pour trouver des pages par titre/mot-clé. Pour lister toutes les pages, utilise une requête vide (query: "").';
+        }
+        
+        // Améliorer la description des outils pour récupérer les blocs enfants
+        if (tool.name === 'API-get-block-children' || tool.name.toLowerCase().includes('block-children') || tool.name.toLowerCase().includes('block_children')) {
+          enhancedDescription = (tool.description || '') + ' IMPORTANT: Cet outil retourne seulement les blocs de premier niveau. Pour récupérer TOUS les blocs d\'une page (y compris les enfants), tu dois appeler cet outil récursivement pour chaque bloc qui a has_children: true. Pour compter tous les blocs d\'une page, commence par récupérer les blocs enfants de la page (block_id = page_id), puis pour chaque bloc retourné avec has_children: true, récupère ses blocs enfants récursivement.';
         }
         
         return {
@@ -632,11 +661,12 @@ Réponds en français de manière naturelle et utile. Utilise directement les ou
             }
 
             // Ajouter le résultat au contexte
+            // Augmenter la limite pour permettre les réponses complètes (50000 caractères)
             this.conversationHistory.push({
               role: 'tool',
               tool_call_id: toolCall.id,
               name: functionName,
-              content: resultContent.substring(0, 4000) // Limiter la taille
+              content: resultContent.substring(0, 50000) // Limiter la taille mais permettre plus de contenu
             });
 
             console.log(`   ✅ Résultat reçu (${resultContent.length} caractères)\n`);
