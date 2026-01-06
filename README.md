@@ -245,6 +245,67 @@ Le client va :
 
 **Note :** Le serveur MCP Notion doit être lancé séparément avec `npm run server:official` ou `npm run server:custom`.
 
+## 🌐 Client MCP Générique
+
+Un client MCP générique est disponible qui fonctionne avec **n'importe quel serveur MCP**, pas seulement Notion. Ce client utilise la bibliothèque standard `mcp-client` et permet d'interagir avec n'importe quel serveur MCP compatible via des questions en langage naturel.
+
+### Caractéristiques
+
+- ✅ **Générique** : Fonctionne avec n'importe quel serveur MCP
+- ✅ **Dynamique** : Découvre automatiquement les outils disponibles sur le serveur
+- ✅ **Intégration LLM** : Utilise Mistral ou Gemini pour les interactions en langage naturel
+- ✅ **Pas de dépendances spécifiques** : Aucune référence à Notion ou autre service spécifique
+
+### Configuration
+
+Ajoutez les variables suivantes dans votre fichier `.env` :
+
+```bash
+# URL du serveur MCP (peut être n'importe quel serveur MCP)
+MCP_SERVER_URL=http://localhost:3000/mcp
+
+# Token d'authentification (optionnel, selon le serveur MCP)
+MCP_AUTH_TOKEN=your-token-here
+
+# Configuration LLM (identique au client LLM Notion)
+LLM_PROVIDER=mistral
+MISTRAL_API_KEY=your_key_here
+# ou
+GEMINI_API_KEY=your_key_here
+USE_OPENROUTER=false
+LLM_MODEL=mistral-small-latest
+```
+
+### Utilisation
+
+1. **Lancer le serveur MCP** de votre choix (dans un terminal) :
+   ```bash
+   # Exemple avec le serveur Notion
+   npm run server:official
+   
+   # Ou n'importe quel autre serveur MCP
+   # Assurez-vous qu'il écoute sur l'URL configurée dans MCP_SERVER_URL
+   ```
+
+2. **Lancer le client générique** (dans un autre terminal) :
+   ```bash
+   npm run client:generic
+   ```
+
+Le client va :
+1. ✅ Se connecter au serveur MCP spécifié
+2. ✅ Découvrir automatiquement tous les outils disponibles
+3. ✅ Permettre de poser des questions en langage naturel
+4. ✅ Le LLM appellera automatiquement les outils nécessaires
+5. ✅ Retourner une réponse basée sur les résultats
+
+**Exemple d'utilisation :**
+```
+❓ Votre question: Quelles sont les pages disponibles ?
+```
+
+Le client fonctionne avec n'importe quel serveur MCP compatible, pas seulement Notion !
+
 ## 🧪 Tests
 
 ### Client de test automatique (STDIO - Recommandé)
@@ -285,6 +346,7 @@ npm run test:api
 | `npm run build` | Compile TypeScript vers JavaScript |
 | `npm start` | Lance le serveur compilé (production) |
 | `npm run llm` | Lance le client LLM interactif (nécessite serveur lancé) |
+| `npm run client:generic` | Lance le client MCP générique (fonctionne avec n'importe quel serveur MCP) |
 | `npm run demo` | Démonstration du flux LLM-MCP (sans clé API LLM) |
 | `npm run test:stdio` | Tests avec transport STDIO |
 | `npm run test:http` | Tests avec transport HTTP (nécessite serveur lancé) |

@@ -16,7 +16,8 @@
     "test:http": "tsx src/test-client-http.ts",
     "test:api": "tsx src/test-api-direct.ts",
     "llm": "tsx src/llm-mcp-client.ts",
-    "demo": "tsx src/llm-mcp-demo.ts"
+    "demo": "tsx src/llm-mcp-demo.ts",
+    "client:generic": "tsx src/generic-mcp-client.ts"
   },
   "keywords": [
     "mcp",
@@ -29,7 +30,8 @@
   "dependencies": {
     "@notionhq/client": "^2.3.0",
     "@notionhq/notion-mcp-server": "latest",
-    "dotenv": "^16.3.1"
+    "dotenv": "^16.3.1",
+    "mcp-client": "^1.13.1"
   },
   "devDependencies": {
     "@types/node": "^20.10.6",
