@@ -1,17 +1,20 @@
 #!/usr/bin/env node
 
 /**
- * Script pour lancer le serveur MCP Notion custom (start.ts)
+ * Script pour lancer le serveur MCP Notion custom
  * 
- * Ce script lance le wrapper custom du serveur MCP Notion
- * qui utilise également le serveur officiel mais avec notre propre gestion.
+ * Ce script utilise directement la librairie @notionhq/notion-mcp-server
+ * au lieu de lancer un processus externe.
  * 
  * Usage:
  *   npm run server:custom
  */
 
-import { spawn, ChildProcess } from 'child_process';
 import dotenv from 'dotenv';
+// @ts-ignore - tsx peut résoudre les imports TypeScript depuis node_modules
+import { startServer } from '@notionhq/notion-mcp-server/scripts/start-server.ts';
+// @ts-ignore - tsx peut résoudre les imports TypeScript depuis node_modules
+import { ValidationError } from '@notionhq/notion-mcp-server/src/init-server.ts';
 
 // Charger les variables d'environnement
 dotenv.config();
@@ -25,42 +28,59 @@ if (!process.env.NOTION_TOKEN && !process.env.NOTION_API_KEY) {
 }
 
 const port: number = parseInt(process.env.PORT || '3000', 10);
+const authToken: string | undefined = process.env.AUTH_TOKEN;
 
-console.log('🚀 Démarrage du serveur MCP Notion custom (start.ts)...');
+console.log('🚀 Démarrage du serveur MCP Notion custom (via librairie)...');
 console.log(`📡 Port: ${port}`);
+console.log(`🔑 Token Notion: ${(process.env.NOTION_TOKEN || process.env.NOTION_API_KEY || '').substring(0, 10)}...`);
+if (authToken) {
+  console.log(`🔐 Auth Token: ${authToken.substring(0, 10)}...`);
+} else {
+  console.log('⚠️  AUTH_TOKEN non défini - un token sera généré automatiquement');
+  console.log('   Pour la production, définissez AUTH_TOKEN dans .env');
+}
 console.log('\n💡 Pour arrêter le serveur, utilisez Ctrl+C\n');
 
-// Lancer le serveur custom via start.ts
-const server: ChildProcess = spawn('tsx', ['src/start.ts'], {
-  env: process.env,
-  stdio: 'inherit',
-  shell: true
-});
+// Construire les arguments pour la fonction startServer
+// La fonction startServer utilise process.argv.slice(2), donc on doit modifier process.argv
+const originalArgv = process.argv;
+const customArgs: string[] = [
+  '--transport',
+  'http',
+  '--port',
+  port.toString()
+];
 
-// Gérer les erreurs
-server.on('error', (error: Error) => {
-  console.error('❌ Erreur lors du démarrage:', error);
-  process.exit(1);
-});
+// Ajouter le token d'authentification si fourni
+if (authToken) {
+  customArgs.push('--auth-token', authToken);
+}
 
-// Gérer la sortie
-server.on('exit', (code: number | null) => {
-  if (code !== 0) {
-    console.error(`❌ Le serveur s'est arrêté avec le code ${code}`);
-    process.exit(code || 1);
+// Modifier temporairement process.argv pour que startServer puisse parser les arguments
+process.argv = [process.argv[0], process.argv[1], ...customArgs];
+
+// Lancer le serveur directement via la librairie
+startServer().catch((error: unknown) => {
+  // Restaurer process.argv en cas d'erreur
+  process.argv = originalArgv;
+  
+  if (error instanceof ValidationError) {
+    console.error('❌ Erreur de validation OpenAPI:');
+    error.errors.forEach((err: unknown) => console.error(err));
+  } else {
+    console.error('❌ Erreur lors du démarrage:', error);
   }
+  process.exit(1);
 });
 
 // Gérer l'interruption (Ctrl+C)
 process.on('SIGINT', () => {
   console.log('\n🛑 Arrêt du serveur...');
-  server.kill('SIGINT');
   process.exit(0);
 });
 
 process.on('SIGTERM', () => {
   console.log('\n🛑 Arrêt du serveur...');
-  server.kill('SIGTERM');
   process.exit(0);
 });
 
