@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "Notion": {
+      "type": "sse",
+      "url": "https://mcp.notion.com/sse"
+    }
+  }
+}
